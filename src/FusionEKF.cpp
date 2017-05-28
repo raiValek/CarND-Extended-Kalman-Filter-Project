@@ -94,15 +94,19 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   previous_timestamp_ = measurement_pack.timestamp_;
 
-  ekf_.F_ << 1, 0, dt, 0,
-             0, 1, 0, dt,
-             0, 0, 1, 0,
-             0, 0, 0, 1;
+  ekf_.F_ << 1.0, 0.0, dt, 0.0,
+             0.0, 1.0, 0.0, dt,
+             0.0, 0.0, 1.0, 0.0,
+             0.0, 0.0, 0.0, 1.0;
 
-  ekf_.Q_ << pow(dt,4)/4*noise_ax_, 0, pow(dt,3)/2*noise_ax_, 0,
-	     0, pow(dt,4)/4*noise_ay_, 0, pow(dt,3)/2*noise_ay_,
-	     pow(dt,3)/2*noise_ax_, 0, pow(dt,2)*noise_ax_, 0,
-	     0, pow(dt,3)/2*noise_ay_, 0, pow(dt,2)*noise_ay_; 
+  double dt_2 = dt*dt;
+  double dt_3 = dt_2*dt;
+  double dt_4 = dt_3*dt;
+
+  ekf_.Q_ << dt_4/4*noise_ax_, 0.0, dt_3/2*noise_ax_, 0.0,
+	     0.0, dt_4/4*noise_ay_, 0, dt_3/2*noise_ay_,
+	     dt_3/2*noise_ax_, 0.0, dt_2*noise_ax_, 0.0,
+	     0.0, dt_3/2*noise_ay_, 0.0, dt_2*noise_ay_; 
 
   ekf_.Predict();
 
