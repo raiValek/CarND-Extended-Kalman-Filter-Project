@@ -32,23 +32,25 @@ int main()
 
   // Create a Kalman Filter instance
   FusionEKF fusionEKF;
+  
+  // Initialize floating RMSE calculation
+  Tools tools;
+  tools.InitRMSE();
 
   // used to compute the RMSE later
-  Tools tools;
   vector<VectorXd> estimations;
   vector<VectorXd> ground_truth;
 
-  h.onMessage([&fusionEKF,&tools,&estimations,&ground_truth](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&fusionEKF,&estimations,&ground_truth,&tools](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
 
     if (length && length > 2 && data[0] == '4' && data[1] == '2')
-    {
-
+    {  
       auto s = hasData(std::string(data));
       if (s != "") {
-      	
+              	
         auto j = json::parse(s);
 
         std::string event = j[0].get<std::string>();
@@ -77,7 +79,6 @@ int main()
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
           } else if (sensor_type.compare("R") == 0) {
-
       	  		meas_package.sensor_type_ = MeasurementPackage::RADAR;
           		meas_package.raw_measurements_ = VectorXd(3);
           		float ro;
@@ -90,7 +91,7 @@ int main()
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
           }
-          float x_gt;
+        float x_gt;
     	  float y_gt;
     	  float vx_gt;
     	  float vy_gt;
@@ -105,7 +106,7 @@ int main()
     	  gt_values(3) = vy_gt;
     	  ground_truth.push_back(gt_values);
           
-          //Call ProcessMeasurment(meas_package) for Kalman filter
+        //Call ProcessMeasurment(meas_package) for Kalman filter
     	  fusionEKF.ProcessMeasurement(meas_package);    	  
 
     	  //Push the current estimated x,y positon from the Klaman filter's state vector
@@ -124,7 +125,8 @@ int main()
     	  
     	  estimations.push_back(estimate);
 
-    	  VectorXd RMSE = tools.CalculateRMSE(estimations, ground_truth);
+    	  //VectorXd RMSE = Tools::CalculateRMSE(estimations, ground_truth);
+          VectorXd RMSE = tools.CalculateFloatingRMSE(estimate, gt_values);          
 
           json msgJson;
           msgJson["estimate_x"] = p_x;
